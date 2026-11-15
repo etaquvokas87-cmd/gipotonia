@@ -94,6 +94,25 @@ ol.seq button.go .t::after{content:"таблица гипотонии →";displ
 .block ol{margin:0;padding-left:20px}
 .block li{margin:4px 0}
 .sign{margin:32px 0 8px;text-align:center;color:var(--muted);font-size:.85rem;padding-top:14px;border-top:1px solid var(--line)}
+/* body figure */
+:root{--skin:#F3EAE4;--skin-line:#D9C7BC;--mus:#E2AFA7;--mus-fib:#C4867D;--mus-deco:#EBCBC5}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--skin:#2B3050;--skin-line:#444B72;--mus:#6A4660;--mus-fib:#8A5C7C;--mus-deco:#4A3E5C}}
+:root[data-theme="dark"]{--skin:#2B3050;--skin-line:#444B72;--mus:#6A4660;--mus-fib:#8A5C7C;--mus-deco:#4A3E5C}
+.fig{display:flex;justify-content:center;gap:2px;background:linear-gradient(180deg,var(--surface),var(--bg));border:1px solid var(--line);border-radius:16px;padding:12px 4px 8px;margin:0 0 12px}
+.fig figure{margin:0;text-align:center}
+.fig svg{height:250px;width:auto;display:block;overflow:hidden}
+.fig figcaption{font-size:.75rem;color:var(--muted);margin-top:4px;font-weight:600;letter-spacing:.02em}
+.fig .skin{fill:var(--skin);stroke:var(--skin-line);stroke-width:.9;stroke-linejoin:round}
+.fig .lm{fill:none;stroke:var(--skin-line);stroke-width:.8;stroke-linecap:round}
+.fig .deco{fill:var(--mus-deco);stroke:var(--skin);stroke-width:1;pointer-events:none}
+.fig .mu{fill:var(--mus);stroke:var(--skin);stroke-width:1.1;stroke-linejoin:round;cursor:pointer;transition:fill .2s}
+.fig .fib{pointer-events:none}
+.fig .fibl{stroke:var(--mus-fib);stroke-width:.5;opacity:.55}
+@media (hover:hover){.fig .mu:hover{fill:var(--mus-fib)}}
+.fig .mu.on{fill:var(--uni);filter:drop-shadow(0 0 3px var(--uni))}
+.fig .mu.deep{fill:none;stroke:none;pointer-events:none}
+.fig .mu.deep.on{fill:var(--uni);fill-opacity:.35;stroke:var(--uni);stroke-width:1.2;stroke-dasharray:2.5 1.6;filter:none}
+.fignote{font-size:.78rem;color:var(--muted);text-align:center;margin:-6px 0 12px}
 /* search */
 .search{width:100%;font:inherit;font-size:1rem;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink)}
 .search:focus{border-color:var(--uni);outline:none}
@@ -274,6 +293,106 @@ if(!DATA.find(d=>d.id===state.m)) state = {m:"pmin", s:"uni"};
 state.g = DATA.find(d=>d.id===state.m).group;
 let marks = store.get("hypo-marks", {});
 
+/* ---------- Человечек ---------- */
+const HALF = [[72,41],[72,55],[60,59],[48,62],[39,69],[34,90],[31,120],[29,150],[25,180],[22,210],[20,232],[16,246],[18,260],[25,262],[29,250],[30,232],[35,205],[39,178],[42,152],[47,118],[49,104],[52,140],[56,170],[56,188],[52,212],[50,262],[54,290],[52,322],[58,345],[50,356],[70,356],[70,345],[72,300],[76,240],[80,226]];
+function smooth(pts, closed=true){
+  const n = pts.length, P = i => pts[closed ? (i+n)%n : Math.max(0,Math.min(n-1,i))];
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for(let i=0;i<(closed?n:n-1);i++){
+    const p0=P(i-1),p1=P(i),p2=P(i+1),p3=P(i+2);
+    const c1=[p1[0]+(p2[0]-p0[0])/6, p1[1]+(p2[1]-p0[1])/6];
+    const c2=[p2[0]-(p3[0]-p1[0])/6, p2[1]-(p3[1]-p1[1])/6];
+    d += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0]},${p2[1]}`;
+  }
+  return d + (closed?" Z":"");
+}
+const mirror = pts => pts.map(([x,y])=>[160-x,y]);
+const OUTLINE = smooth(HALF.concat(mirror(HALF).reverse()));
+const FIG = {
+  front:{
+    deco:[
+      [[79,103],[69,105],[67,128],[68,160],[71,190],[79,197]],
+      [[66,105],[57,124],[56,160],[59,186],[68,190],[66,150]],
+      [[30,153],[26,180],[23,207],[28,212],[34,190],[40,156]],
+      [[56,221],[52,262],[74,264],[76,240],[70,226]]
+    ],
+    lines:["M79,64 Q66,59 52,63","M80,64 L80,100","M69,122 L79,122","M68,140 L79,140","M68,158 L79,158"],
+    dots:[[80,176]],
+    mus:[
+      {id:"ser",  p:[[49,101],[55,102],[58,113],[56,127],[52,131]]},
+      {id:"pmajs",p:[[79,77],[51,77],[47,88],[54,99],[66,103],[79,101]]},
+      {id:"pmajc",p:[[79,65],[57,64],[50,68],[51,76],[79,76]]},
+      {id:"dmid", p:[[44,64],[37,72],[34,94],[38,93],[39,74]]},
+      {id:"dant", p:[[53,63],[45,64],[40,72],[40,92],[46,88],[51,75]]},
+      {id:"bicl", p:[[39,96],[35,104],[33,130],[34,147],[37,141],[38,112]]},
+      {id:"bics", p:[[46,100],[40,103],[39,138],[41,147],[43,122]]},
+      {id:"cbr",  p:[[48,91],[45,94],[44,112],[47,108]]},
+      {id:"scm",  p:[[68,36],[72,37],[79,61],[75,62]]},
+      {id:"scal", p:[[70,45],[72,45],[70,59],[66,60]]},
+      {id:"icost",p:[[77,68],[54,72],[52,100],[66,108],[77,104]], deep:1},
+      {id:"pmin", p:[[66,68],[57,71],[55,86],[60,93],[67,80]], deep:1},
+      {id:"subcl",p:[[74,62],[57,63],[57,66],[74,65]], deep:1}
+    ]},
+  back:{
+    deco:[
+      [[30,153],[26,180],[23,207],[28,212],[34,190],[40,156]],
+      [[79,198],[62,197],[54,212],[58,234],[79,236]],
+      [[56,240],[53,262],[76,264],[77,242]]
+    ],
+    lines:["M80,44 L80,200"],
+    dots:[],
+    mus:[
+      {id:"lat",  p:[[67,98],[57,101],[52,113],[54,150],[58,186],[79,190],[79,130],[72,104]]},
+      {id:"utr",  p:[[77,42],[72,54],[51,62],[55,66],[66,66],[79,64]]},
+      {id:"mtr",  p:[[79,65],[67,67],[64,71],[66,78],[79,83]]},
+      {id:"ltr",  p:[[79,84],[68,81],[70,102],[79,128]]},
+      {id:"infra",p:[[63,72],[54,72],[51,86],[57,95],[63,87]]},
+      {id:"tmin", p:[[53,79],[47,84],[47,89],[51,88]]},
+      {id:"tmaj", p:[[54,91],[47,93],[47,99],[57,99]]},
+      {id:"dpost",p:[[53,63],[45,64],[40,72],[40,92],[46,88],[51,75]]},
+      {id:"dmid", p:[[44,64],[37,72],[34,94],[38,93],[39,74]]},
+      {id:"tris", p:[[39,96],[35,104],[33,130],[34,147],[37,141],[38,112]]},
+      {id:"tril", p:[[46,100],[40,103],[39,138],[41,147],[43,122]]},
+      {id:"subsc",p:[[65,66],[53,68],[50,90],[58,100],[65,88]], deep:1},
+      {id:"supra",p:[[66,63],[54,64],[53,69],[66,69]], deep:1},
+      {id:"rho",  p:[[78,68],[70,68],[63,96],[72,100],[78,90]], deep:1},
+      {id:"lev",  p:[[71,44],[68,45],[61,66],[64,67]], deep:1}
+    ]}
+};
+function figView(view, sel){
+  const F = FIG[view], uid = "fib-"+view;
+  const both = pts => [smooth(pts), smooth(mirror(pts))];
+  const deco = F.deco.flatMap(both).map(d=>`<path class="deco" d="${d}"/>`).join("");
+  const lines = F.lines.map(d=>`<path class="lm" d="${d}"/>`).join("")
+    + F.lines.map(d=>`<path class="lm" d="${d}" transform="translate(160,0) scale(-1,1)"/>`).join("")
+    + F.dots.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.3" fill="var(--skin-line)"/>`).join("");
+  const order = F.mus.filter(m=>!m.deep).concat(F.mus.filter(m=>m.deep));
+  const mus = order.map(m=>{
+    const name = (DATA.find(d=>d.id===m.id)||{}).full || "";
+    const cls = `mu${m.deep?" deep":""}${m.id===sel?" on":""}`;
+    return both(m.p).map(d=>`<path class="${cls}" data-id="${m.id}" d="${d}"><title>${esc(name)}</title></path>`).join("");
+  }).join("");
+  const fib = F.mus.filter(m=>!m.deep && m.id!==sel).flatMap(m=>both(m.p)).map(d=>`<path d="${d}"/>`).join("");
+  return `<figure><svg viewBox="0 0 160 266" role="img" aria-label="${view==="front"?"Вид спереди":"Вид сзади"}">
+    <defs><pattern id="${uid}" width="2.6" height="2.6" patternUnits="userSpaceOnUse" patternTransform="rotate(${view==="front"?25:-25})"><line class="fibl" x1="0" y1="0" x2="0" y2="2.6"/></pattern></defs>
+    <ellipse class="skin" cx="65.5" cy="27" rx="2.6" ry="4.5"/><ellipse class="skin" cx="94.5" cy="27" rx="2.6" ry="4.5"/>
+    <path class="skin" d="${OUTLINE}"/>
+    <ellipse class="skin" cx="80" cy="24" rx="14" ry="17"/>
+    ${deco}${lines}${mus}
+    <g class="fib" fill="url(#${uid})">${fib}</g>
+  </svg><figcaption>${view==="front"?"Спереди":"Сзади"}</figcaption></figure>`;
+}
+function figure(sel){
+  const isDeep = ["front","back"].some(v=>FIG[v].mus.some(m=>m.id===sel && m.deep));
+  return `<div class="fig">${figView("front",sel)}${figView("back",sel)}</div>`
+    + (isDeep ? `<p class="fignote">Пунктир — мышца лежит глубоко, под другими</p>` : "");
+}
+document.getElementById("result").addEventListener("click", e=>{
+  const t = e.target.closest(".mu"); if(!t) return;
+  const d = DATA.find(x=>x.id===t.dataset.id); if(!d) return;
+  state.m = d.id; state.g = d.group; state.s = "uni"; renderMuscle();
+});
+
 /* ---------- По мышце ---------- */
 function renderMuscle(){
   const mEl = document.getElementById("muscles");
@@ -287,6 +406,7 @@ function renderMuscle(){
   document.getElementById("result").innerHTML =
     `<h2 class="title">${esc(mus.full)}</h2>
      <p class="sub">${SIDES[state.s].label.toLowerCase()} гипотония, ${SIDES[state.s].short} · стр. ${mus.page}${mus.note?` · <span class="note">${esc(mus.note)}</span>`:""}</p>
+     ${figure(mus.id)}
      <ol class="list" style="--accent:${SIDES[state.s].accent}">${items.map(i=>`<li>${esc(i)}</li>`).join("")}</ol>`;
   store.set("hypo-state", state);
   const active = mEl.querySelector('[aria-pressed="true"]');
