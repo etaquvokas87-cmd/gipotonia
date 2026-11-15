@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Гипотония мышц</title>
+<style>
+:root{
+  --bg:#EEF1F6; --surface:#FFFFFF; --ink:#1B2140; --muted:#5F6787; --line:#D6DBE7;
+  --uni:#3442A8; --uni-soft:#E3E6F8;
+  --bi:#1F7A6E; --bi-soft:#DDF0EC;
+  --con:#A8641A; --con-soft:#F6EAD9;
+  --chip:#E4E8F1;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12152A; --surface:#1C2038; --ink:#E7EAF5; --muted:#9AA1C0; --line:#2E3354;
+    --uni:#8F9BFF; --uni-soft:#272E5C;
+    --bi:#5CCBB9; --bi-soft:#173B37;
+    --con:#E6A660; --con-soft:#3D2C17;
+    --chip:#262B48;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12152A; --surface:#1C2038; --ink:#E7EAF5; --muted:#9AA1C0; --line:#2E3354;
+  --uni:#8F9BFF; --uni-soft:#272E5C; --bi:#5CCBB9; --bi-soft:#173B37;
+  --con:#E6A660; --con-soft:#3D2C17; --chip:#262B48; color-scheme:dark;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--uni);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 96px}
+
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:14px 0 10px}
+h1{font-size:1.15rem;font-weight:700;margin:0 0 10px;letter-spacing:-.01em}
+
+.muscles{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.muscles::-webkit-scrollbar{display:none}
+.m{flex:0 0 auto;border:0;background:var(--chip);padding:9px 14px;border-radius:999px;font-size:.92rem;white-space:nowrap}
+.m[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:600}
+
+.sides{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.side{border:2px solid transparent;border-radius:12px;padding:10px 6px;font-size:.85rem;font-weight:600;line-height:1.2;background:var(--surface)}
+.side small{display:block;font-weight:400;font-size:.75rem;color:var(--muted);margin-top:2px}
+.side[data-k="uni"]{color:var(--uni)} .side[data-k="bi"]{color:var(--bi)} .side[data-k="con"]{color:var(--con)}
+.side[aria-pressed="true"][data-k="uni"]{background:var(--uni-soft);border-color:var(--uni)}
+.side[aria-pressed="true"][data-k="bi"]{background:var(--bi-soft);border-color:var(--bi)}
+.side[aria-pressed="true"][data-k="con"]{background:var(--con-soft);border-color:var(--con)}
+.side:disabled{opacity:.35;cursor:default}
+
+.groups{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.g{border:0;border-radius:10px;padding:8px 10px;background:var(--chip);font-size:.9rem;font-weight:600;text-align:left;line-height:1.2}
+.g small{display:block;font-weight:400;font-size:.75rem;color:var(--muted)}
+.g[aria-pressed="true"]{background:var(--uni);color:#fff}
+.g[aria-pressed="true"] small{color:rgba(255,255,255,.8)}
+.note{color:var(--con);font-weight:600}
+.title{font-size:1.6rem;font-weight:700;line-height:1.15;margin:18px 0 4px;letter-spacing:-.02em}
+.sub{color:var(--muted);font-size:.9rem;margin:0 0 14px}
+ol.list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+ol.list li{background:var(--surface);border-radius:12px;padding:13px 14px 13px 16px;border-left:5px solid var(--accent,var(--uni));font-size:1.02rem}
+.kind{display:block;font-size:.75rem;color:var(--muted);margin-bottom:2px}
+.empty{color:var(--muted);padding:20px 0}
+
+/* match mode */
+.mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface);border-radius:12px;padding:8px 8px 8px 14px;margin-bottom:6px}
+.mrow span{font-size:.95rem}
+.tri{display:flex;gap:4px;flex:0 0 auto}
+.tri button{border:0;background:var(--chip);border-radius:8px;min-width:44px;padding:8px 6px;font-size:.82rem;font-weight:600}
+.tri button[aria-pressed="true"][data-v="0"]{background:var(--ink);color:var(--bg)}
+.tri button[aria-pressed="true"][data-v="1"]{background:var(--uni);color:#fff}
+.tri button[aria-pressed="true"][data-v="2"]{background:var(--bi);color:#fff}
+.hits li{display:flex;gap:12px;align-items:flex-start}
+.count{flex:0 0 auto;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--uni-soft);color:var(--uni)}
+.hits .src{display:block;font-size:.8rem;color:var(--muted);margin-top:2px}
+.reset{border:0;background:none;color:var(--uni);font-weight:600;padding:6px 0}
+h2{font-size:1.05rem;margin:20px 0 10px}
+
+/* joint */
+ol.seq{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+ol.seq li{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:12px;padding:10px 12px}
+ol.seq .n{flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.9rem;background:var(--uni-soft);color:var(--uni)}
+ol.seq .t{flex:1;font-size:1.02rem}
+ol.seq button.go{border:0;background:none;padding:0;text-align:left;width:100%;display:flex;align-items:center;gap:12px}
+ol.seq button.go .t::after{content:"таблица гипотонии →";display:block;font-size:.75rem;color:var(--uni);font-weight:600;margin-top:1px}
+.block{background:var(--surface);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.block h3{margin:0 0 6px;font-size:.95rem}
+.block ol{margin:0;padding-left:20px}
+.block li{margin:4px 0}
+/* search */
+.search{width:100%;font:inherit;font-size:1rem;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink)}
+.search:focus{border-color:var(--uni);outline:none}
+mark{background:var(--con-soft);color:inherit;border-radius:3px}
+
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+nav button{border:0;background:none;padding:12px 4px;font-size:.88rem;color:var(--muted);font-weight:500}
+nav button[aria-current="page"]{color:var(--ink);font-weight:700;box-shadow:inset 0 3px 0 var(--ink)}
+.view[hidden]{display:none}
+@media (prefers-reduced-motion:no-preference){ol.list li{animation:in .18s ease-out both}@keyframes in{from{opacity:0;transform:translateY(4px)}}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<section class="view" id="v-muscle">
+  <header>
+    <h1>Гипотония: что проверить</h1>
+    <div class="groups" id="groups" role="group" aria-label="Раздел"></div>
+    <div class="muscles" id="muscles" role="group" aria-label="Мышца"></div>
+    <div class="sides" id="sides" role="group" aria-label="Тип гипотонии"></div>
+  </header>
+  <div id="result"></div>
+</section>
+
+<section class="view" id="v-match" hidden>
+  <header>
+    <h1>Совпадения по нескольким мышцам</h1>
+    <p class="sub" style="margin:0">Отметьте слабые мышцы: 1 — одна сторона, 2 — обе. Сверху окажется то, что встречается чаще всего.</p>
+  </header>
+  <div id="matchRows"></div>
+  <button class="reset" id="reset">Сбросить отметки</button>
+  <div id="matchOut"></div>
+</section>
+
+<section class="view" id="v-joint" hidden>
+  <header>
+    <h1>Плечевой сустав</h1>
+    <div class="muscles" id="jtabs" role="group" aria-label="Раздел"></div>
+  </header>
+  <div id="jointOut"></div>
+</section>
+
+<section class="view" id="v-search" hidden>
+  <header>
+    <h1>Поиск по всем таблицам</h1>
+    <input class="search" id="q" type="search" placeholder="Например: селезенка, Th5, зуб" autocomplete="off">
+  </header>
+  <div id="searchOut"></div>
+</section>
+
+</div>
+
+<nav><div class="in">
+  <button data-view="muscle" aria-current="page">Мышца</button>
+  <button data-view="match">Совпадения</button>
+  <button data-view="joint">Сустав</button>
+  <button data-view="search">Поиск</button>
+</div></nav>
+
+<script>
+const DATA = [
+  {id:"pmin", name:"Малая грудная", full:"Малая грудная мышца", page:28,
+   uni:["Связки грудино-ключичного сустава","Категория таза 1","Меридиан Селезенки","Грудино-реберные суставы (1–4)"],
+   bi:["Селезенка","Категория таза 1"], con:[]},
+  {id:"lev", name:"Поднимающая лопатку", full:"Мышца, поднимающая лопатку", page:29,
+   uni:["Связки грудино-ключичного сустава","Паращитовидные железы","Меридиан тройного обогревателя","Спондилогенный рефлекс T2, 3, 4, 5"],
+   bi:["Крестцово-остистая связка","Надостистая связка C5","Дисфункция назосфеноид"], con:[]},
+  {id:"utr", name:"Верхняя трапеция", full:"Верхняя порция трапециевидной мышцы", page:29,
+   uni:["Задняя крестообразная связка","Передняя таранно-большеберцовая связка (передняя порция дельтовидной связки), медиальная поверхность голеностопного сустава","Задняя таранно-малоберцовая связка (латер. отдел голеностопного сустава)","PILUS (левая верхняя трапеция)","Чешуйчатый шов","Зуб 1 (сверху)","Глаза и уши"],
+   bi:["Надостистая связка C2 и C7","Крестцово-остистая связка"],
+   con:["Клиновидно-ладьевидная связка (мед. отдел стопы)"]},
+  {id:"mtr", name:"Средняя трапеция", full:"Средняя трапециевидная мышца", page:30,
+   uni:["Задняя крестообразная связка","Зуб 8 (сверху)","Меридиан Селезенки","Спондилогенный рефлекс L1, 2, 3; T1–7"],
+   bi:["Крестцово-остистая связка","Небный шов (иногда)","Селезенка","Надостистая связка Th5–6"], con:[]},
+  {id:"ltr", name:"Нижняя трапеция", full:"Нижняя трапециевидная мышца", page:30,
+   uni:["Задняя крестообразная связка","Дисторзия крестца","Меридиан Селезенки","Спондилогенный рефлекс T8, 9, 10, 11, 12; L4"],
+   bi:["Крестцово-бугорная связка","Фиксация грудо-поясничного перехода","Селезенка","Надостистая связка Th6"], con:[]},
+  {id:"rho", name:"Ромбовидные", full:"Ромбовидные мышцы", page:31,
+   uni:["Меридиан Печени","Спондилогенный рефлекс C4, 5, 6, 7; T1, 2"],
+   bi:["Крестцово-остистая связка","Небный шов (иногда)","Печень","Надостистая связка Th5"], con:[]},
+  {id:"ser", name:"Передняя зубчатая", full:"Передняя зубчатая мышца", page:31,
+   uni:["Меридиан Легкого","Легкое","Гольджи на ребрах (1–9)"],
+   bi:["Фиксация шейно-грудного перехода","Надостистая связка Th3–4"], con:[]}
+];
+DATA.forEach(d=>d.group="lop");
+const BLUR = "фото нечёткое, сверьте с методичкой";
+DATA.push(
+  {id:"dmid", group:"arm", name:"Средняя дельта", full:"Средняя дельтовидная мышца", page:68,
+   uni:["Ключично-акромиальный сустав","Латеральный пучок плантарного апоневроза","Чешуйчатый шов (иногда)","Зуб 3 (сверху)","Меридиан Легкого","Легкое"],
+   bi:["Фиксация шейно-грудного перехода","Надостистая связка Th3–4"], con:[]},
+  {id:"dant", group:"arm", name:"Передняя дельта", full:"Передняя дельтовидная мышца", page:69,
+   uni:["Клиновидно-ладьевидная связка (медиальный отдел стопы)","Дистальная поперечная связка стопы и латеральный пучок плантарного апоневроза","Чешуйчатый шов (иногда)","Зуб 3 (сверху)","Меридиан Легкого","Легкое"],
+   bi:["Фиксация шейно-грудного перехода","Надостистая связка Th4"], con:[]},
+  {id:"dpost", group:"arm", name:"Задняя дельта", full:"Задняя дельтовидная мышца", page:69,
+   uni:["Клиновидно-ладьевидная связка (медиальный отдел стопы) и латеральный пучок плантарного апоневроза","Чешуйчатый шов (иногда)","Зуб 3 (сверху)","Меридиан Легкого","Легкое"],
+   bi:["Небный шов","Фиксация шейно-грудного перехода","Надостистая связка Th3–4"], con:[]},
+  {id:"supra", group:"arm", name:"Надостная", full:"Надостная мышца", page:70,
+   uni:["Латеральный пучок плантарного апоневроза"],
+   bi:["Надостистая связка C1–2","Головной мозг"], con:[]},
+  {id:"bics", group:"arm", name:"Бицепс, короткая гол.", full:"Двуглавая мышца плеча, короткая головка", page:70,
+   uni:["Круглая связка головки лучевой кости","Медиальные коллатеральные связки локтевого сустава","Поперечная связка","Меридиан Желудка","Дистальная поперечная связка стопы"],
+   bi:["Желудок"], con:[]},
+  {id:"bicl", group:"arm", name:"Бицепс, длинная гол.", full:"Двуглавая мышца плеча, длинная головка", page:71,
+   uni:["Клюво-акромиальная связка","Круглая связка головки лучевой кости","Поперечная связка плеча","Медиальные коллатеральные связки локтевого сустава","Меридиан Желудка","Дистальная поперечная связка стопы"],
+   bi:["Желудок"], con:[]},
+  {id:"tril", group:"arm", name:"Трицепс, длинная гол.", full:"Трехглавая мышца плеча, длинная головка", page:71,
+   uni:["Меридиан Селезенки","Латеральные коллатеральные связки локтевого сустава"],
+   bi:["Дисфункция назосфеноид","Поджелудочная железа","Надостистая связка Th1"], con:[]},
+  {id:"tris", group:"arm", name:"Трицепс, короткие гол.", full:"Трехглавая мышца плеча, короткие головки", page:72,
+   uni:["Меридиан Селезенки"],
+   bi:["Дисфункция назосфеноид","Поджелудочная железа","Надостистая связка Th1"], con:[]},
+  {id:"icost", group:"arm", name:"Межреберные (1–6)", full:"Межреберные мышцы (1–6)", page:72,
+   uni:["Клюво-акромиальная связка"], bi:[], con:[]},
+  {id:"cbr", group:"arm", name:"Клювовидно-плечевая", full:"Клювовидно-плечевая мышца", page:73,
+   uni:["Меридиан Легкого","Легкое","Дистальная поперечная связка стопы"],
+   bi:["Небный шов (иногда)","Надостистая связка Th2"], con:[]},
+  {id:"lat", group:"arm", name:"Широчайшая", full:"Широчайшая мышца спины", page:73,
+   uni:["Таранно-ладьевидная связка (медиальные связки голеностопного сустава)","Клюво-акромиальная связка","Плантарная фасция","PILUS (левосторонняя гипотония)","Зуб 6 (сверху)","Меридиан Селезенки","Спондилогенный рефлекс C1–C7; T2, 3, 4; L5"],
+   bi:["Крестцово-бугорная связка","Дисфункция назосфеноид","Поджелудочная железа","Надостистая связка Th7"], con:[]},
+  {id:"tmin", group:"arm", name:"Малая круглая", full:"Малая круглая мышца", page:74, note:BLUR,
+   uni:["Меридиан тройного обогревателя","Латеральный пучок подошвенного апоневроза (ипси)"],
+   bi:["Щитовидная железа","Надостистая связка Th2","Дисфункция назосфеноид"], con:[]},
+  {id:"tmaj", group:"arm", name:"Большая круглая", full:"Большая круглая мышца", page:74, note:BLUR,
+   uni:["Задне-срединный меридиан","Подошвенная фасция стопы"],
+   bi:["Надостистая связка Th2","Дисфункция назосфеноид","Фиксация грудного отдела","Эпифиз"], con:[]},
+  {id:"subsc", group:"arm", name:"Подлопаточная", full:"Подлопаточная мышца", page:75, note:BLUR,
+   uni:["Передняя крестообразная связка","Задняя таранно-большеберцовая ладьевидная связка (медиальный отдел голеностопного сустава), ипси","Зуб 2 (сверху)","Меридиан Сердца","Подошвенная фасция стопы"],
+   bi:["Сердце","Фиксация грудины"], con:[]},
+  {id:"infra", group:"arm", name:"Подостная", full:"Подостная мышца", page:75, note:BLUR,
+   uni:["Задняя крестообразная связка","Меридиан тройного обогревателя","Латеральный пучок подошвенного апоневроза"],
+   bi:["Вилочковая железа"], con:[]}
+);
+const GROUPS = [{id:"lop", name:"Лопатка", pages:"стр. 28–31"},{id:"arm", name:"Плечо и рука", pages:"стр. 68–75"}];
+const SIDES = {
+  uni:{label:"Односторонняя", short:"ипсилатерально", accent:"var(--uni)"},
+  bi:{label:"Двусторонняя", short:"обе стороны", accent:"var(--bi)"},
+  con:{label:"Односторонняя", short:"контрлатерально", accent:"var(--con)"}
+};
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const store = {
+  get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+
+let state = store.get("hypo-state", {m:"pmin", s:"uni"});
+if(!DATA.find(d=>d.id===state.m)) state = {m:"pmin", s:"uni"};
+state.g = DATA.find(d=>d.id===state.m).group;
+let marks = store.get("hypo-marks", {});
+
+/* ---------- По мышце ---------- */
+function renderMuscle(){
+  const mEl = document.getElementById("muscles");
+  document.getElementById("groups").innerHTML = GROUPS.map(g=>`<button class="g" data-g="${g.id}" aria-pressed="${g.id===state.g}">${g.name}<small>${g.pages}</small></button>`).join("");
+  mEl.innerHTML = DATA.filter(d=>d.group===state.g).map(d=>`<button class="m" data-id="${d.id}" aria-pressed="${d.id===state.m}">${esc(d.name)}</button>`).join("");
+  const mus = DATA.find(d=>d.id===state.m);
+  if(!mus[state.s] || !mus[state.s].length) state.s = "uni";
+  document.getElementById("sides").innerHTML = Object.entries(SIDES).map(([k,v])=>
+    `<button class="side" data-k="${k}" aria-pressed="${k===state.s}" ${mus[k].length?"":"disabled"}>${v.label}<small>${v.short}</small></button>`).join("");
+  const items = mus[state.s];
+  document.getElementById("result").innerHTML =
+    `<h2 class="title">${esc(mus.full)}</h2>
+     <p class="sub">${SIDES[state.s].label.toLowerCase()} гипотония, ${SIDES[state.s].short} · стр. ${mus.page}${mus.note?` · <span class="note">${esc(mus.note)}</span>`:""}</p>
+     <ol class="list" style="--accent:${SIDES[state.s].accent}">${items.map(i=>`<li>${esc(i)}</li>`).join("")}</ol>`;
+  store.set("hypo-state", state);
+  const active = mEl.querySelector('[aria-pressed="true"]');
+  if(active) active.scrollIntoView({block:"nearest", inline:"center"});
+}
+document.getElementById("muscles").addEventListener("click", e=>{
+  const b = e.target.closest(".m"); if(!b) return; state.m = b.dataset.id; renderMuscle();
+});
+document.getElementById("groups").addEventListener("click", e=>{
+  const b = e.target.closest(".g"); if(!b || b.dataset.g===state.g) return;
+  state.g = b.dataset.g; state.m = DATA.find(d=>d.group===state.g).id; state.s = "uni"; renderMuscle();
+});
+document.getElementById("sides").addEventListener("click", e=>{
+  const b = e.target.closest(".side"); if(!b || b.disabled) return; state.s = b.dataset.k; renderMuscle();
+});
+
+/* ---------- Совпадения ---------- */
+const norm = s => s.toLowerCase().replace(/ё/g,"е").replace(/\s+/g," ").trim();
+/* ключ для совпадений: склеивает одинаковые пункты, записанные по-разному */
+const key = s => norm(s)
+  .replace(/\((иногда|ипси)\)/g,"").replace(/,? ипси$/,"")
+  .replace(/подошвенн/g,"плантарн").replace(/фасция стопы/g,"фасция")
+  .replace(/\(сверху\)/g,"сверху").replace(/th\s*/g,"th").replace(/–/g,"-")
+  .replace(/\s+/g," ").trim();
+function renderMatch(){
+  document.getElementById("matchRows").innerHTML = GROUPS.map(g=>`<h2>${g.name}</h2>`+DATA.filter(d=>d.group===g.id).map(d=>{
+    const v = marks[d.id]||0;
+    return `<div class="mrow"><span>${esc(d.name)}</span><div class="tri" data-id="${d.id}">
+      ${[["0","—"],["1","1"],["2","2"]].map(([val,t])=>`<button data-v="${val}" aria-pressed="${String(v)===val}" aria-label="${val==="0"?"Норма":val==="1"?"Одна сторона":"Обе стороны"}">${t}</button>`).join("")}
+    </div></div>`;
+  }).join("")).join("");
+  const map = new Map();
+  DATA.forEach(d=>{
+    const v = marks[d.id]; if(!v) return;
+    const lists = v===1 ? [["uni",d.uni],["con",d.con]] : [["bi",d.bi]];
+    lists.forEach(([k,arr])=>arr.forEach(it=>{
+      const k2 = key(it);
+      if(!map.has(k2)) map.set(k2,{text:it, src:[]});
+      map.get(k2).src.push(d.name + (k==="con"?" (контрлат.)":""));
+    }));
+  });
+  const hits = [...map.values()].sort((a,b)=>b.src.length-a.src.length || a.text.localeCompare(b.text,"ru"));
+  const out = document.getElementById("matchOut");
+  if(!hits.length){ out.innerHTML = `<p class="empty">Отметьте хотя бы одну мышцу, и здесь появится список того, что проверить.</p>`; }
+  else out.innerHTML = `<h2>Что проверить</h2><ol class="list hits">${hits.map(h=>
+    `<li style="--accent:${h.src.length>1?"var(--con)":"var(--line)"}"><span class="count">${h.src.length}</span><div>${esc(h.text)}<span class="src">${esc(h.src.join(", "))}</span></div></li>`).join("")}</ol>`;
+  store.set("hypo-marks", marks);
+}
+document.getElementById("matchRows").addEventListener("click", e=>{
+  const b = e.target.closest(".tri button"); if(!b) return;
+  marks[b.closest(".tri").dataset.id] = Number(b.dataset.v); renderMatch();
+});
+document.getElementById("reset").addEventListener("click", ()=>{marks={}; renderMatch();});
+
+/* ---------- Плечевой сустав ---------- */
+const SEQ = (page, title, items) => ({kind:"seq", page, title, items});
+const JOINT = [
+  {id:"abd", name:"Абдукция", ...SEQ(78, "Последовательность: абдукция", [
+    ["Надостная мышца","supra"],["Средняя дельтовидная мышца","dmid"],["Верхняя трапециевидная мышца","utr"],
+    ["Двуглавая мышца плеча","bicl"],["Большая круглая мышца","tmaj"],["Малая круглая мышца","tmin"],
+    ["Ромбовидная мышца","rho"],["Мышца, поднимающая лопатку","lev"],["ГКС"],
+    ["БГМ (грудинная порция) и МГМ"],["БГМ (ключичная порция)"],["Подключичная мышца"]])},
+  {id:"flex", name:"Флексия", ...SEQ(79, "Последовательность: флексия плеча с прямой рукой", [
+    ["Двуглавая мышца плеча (длинная головка)","bicl"],["Плечевая мышца"],["Верхняя трапециевидная мышца","utr"],
+    ["Передняя дельтовидная мышца","dant"],["Клюво-плечевая мышца","cbr"],["БГМ (ключичная порция)"],
+    ["Ромбовидная мышца","rho"],["Надостная мышца","supra"]])},
+  {id:"er", name:"Наружная ротация", ...SEQ(79, "Последовательность: наружная ротация", [
+    ["Ромбовидная мышца (большая)","rho"],["Средняя трапециевидная мышца","mtr"],["Задняя дельтовидная мышца","dpost"],
+    ["Длинная головка трицепса","tril"],["Подостная мышца","infra"],["Малая круглая мышца","tmin"]])},
+  {id:"ir", name:"Внутренняя ротация", ...SEQ(80, "Последовательность: внутренняя ротация", [
+    ["Малая грудная мышца","pmin"],["БГМ (грудинная порция)"],["БГМ (ключичная порция)"],
+    ["Передняя дельтовидная мышца","dant"],["Короткая головка бицепса","bics"],["Подлопаточная мышца","subsc"],
+    ["Большая круглая мышца","tmaj"],["Широчайшая мышца спины","lat"]])},
+  {id:"causes", name:"Причины нарушения", kind:"blocks", page:"80–81", title:"Причины нарушения биомеханики плечевого сустава", blocks:[
+    ["Дисфункции суставов верхней конечности (локтевой, лучезапястный сустав и кисть)",
+     ["Внутрисуставной болевой рецептор тупой боли","Капсульный Гольджи","Некапсульный Гольджи","ДКЦ, ЗКЦ"]],
+    ["Дисфункция суставов нижней конечности",
+     ["Паттерн шага, дисфункция противоположного тазобедренного сустава (капсульный Гольджи, внутрисуставной палео)","Коленный сустав — ПКС, ЗКС","Голеностопный сустав","Стопа"]]]},
+  {id:"acl", name:"ПКС колена", ...SEQ(81, "Передняя крестообразная связка коленного сустава", [
+    ["Ипсилатеральная Quadriceps / квадрицепс"],["Контралатеральные хамстринги"],["Ипсилатеральная Masseter / жевательная"],
+    ["Передняя порция Temporalis / височная"],["Передние флексоры шеи"],["Ипсилатеральная грудино-ключично-сосцевидная (ГКС)"],
+    ["Ипсилатеральная Subscapularis / подлопаточная","subsc"],["Ипсилатеральная Rectus Abdominis / прямая живота"],
+    ["Ипсилатеральная Pectoralis Major Clavicularis / ключичная порция большой грудной"]]), numbered:false},
+  {id:"pos", name:"Позиционные рецепторы", kind:"blocks", page:78, title:"Дисфункция позиционных рецепторов: диагностика и лечение", blocks:[
+    ["Диагностика", [
+      "Найдите дисфункцию позиции сустава, используя тестирование мышц сустава или ИМ с УТЛ и соответствующий путь (сознательный / бессознательный)",
+      "ТЛ на дистальную кость сустава будет усиливать ингибированные мышцы (ТЛ меняет знак)",
+      "Через 2ТЛ определяем первичность или вторичность дисфункции",
+      "Находим пару первичная / вторичная основная"]],
+    ["Лечение", [
+      "Разместите конечность в соответствующее положение дисфункции",
+      "Пациент думает о суставе (сознательная) или думает о чём-нибудь другом (для бессознательной)",
+      "Стимулируем вторичную основную дисфункцию Гольджи (обычно дистальное расположение) или TS-линия + DTR",
+      "Лечим сознательную и бессознательную дисфункции — они могут быть в одном суставе"]]]}
+];
+let jtab = store.get("hypo-jtab", "abd");
+if(!JOINT.find(j=>j.id===jtab)) jtab = "abd";
+function renderJoint(){
+  const tEl = document.getElementById("jtabs");
+  tEl.innerHTML = JOINT.map(j=>`<button class="m" data-id="${j.id}" aria-pressed="${j.id===jtab}">${esc(j.name)}</button>`).join("");
+  const j = JOINT.find(x=>x.id===jtab);
+  let body = "";
+  if(j.kind==="seq"){
+    body = `<ol class="seq">${j.items.map(([t,id],i)=>{
+      const n = j.numbered===false ? "•" : i+1;
+      const inner = `<span class="n">${n}</span><span class="t">${esc(t)}</span>`;
+      return `<li>${id?`<button class="go" data-go="${id}">${inner}</button>`:inner}</li>`;
+    }).join("")}</ol>`;
+  } else {
+    body = j.blocks.map(([h,arr])=>`<div class="block"><h3>${esc(h)}</h3><ol>${arr.map(a=>`<li>${esc(a)}</li>`).join("")}</ol></div>`).join("");
+  }
+  document.getElementById("jointOut").innerHTML = `<h2 class="title">${esc(j.title)}</h2><p class="sub">стр. ${j.page}</p>${body}`;
+  store.set("hypo-jtab", jtab);
+  const active = tEl.querySelector('[aria-pressed="true"]');
+  if(active) active.scrollIntoView({block:"nearest", inline:"center"});
+}
+document.getElementById("jtabs").addEventListener("click", e=>{
+  const b = e.target.closest(".m"); if(!b) return; jtab = b.dataset.id; renderJoint();
+});
+document.getElementById("jointOut").addEventListener("click", e=>{
+  const b = e.target.closest(".go"); if(!b) return;
+  const d = DATA.find(x=>x.id===b.dataset.go); if(!d) return;
+  state.m = d.id; state.g = d.group; state.s = "uni"; renderMuscle(); show("muscle");
+});
+
+/* ---------- Поиск ---------- */
+function renderSearch(){
+  const q = norm(document.getElementById("q").value);
+  const out = document.getElementById("searchOut");
+  if(!q){ out.innerHTML = `<p class="empty">Введите связку, орган, позвонок или меридиан — покажу, при гипотонии каких мышц он встречается.</p>`; return; }
+  const rows = [];
+  DATA.forEach(d=>Object.keys(SIDES).forEach(k=>d[k].forEach(it=>{
+    if(norm(it).includes(q)) rows.push({it, d, k});
+  })));
+  if(!rows.length){ out.innerHTML = `<p class="empty">Ничего не найдено. Попробуйте часть слова, например «крестц» или «Th».</p>`; return; }
+  const hl = s => { const i = norm(s).indexOf(q); return i<0?esc(s):esc(s.slice(0,i))+"<mark>"+esc(s.slice(i,i+q.length))+"</mark>"+esc(s.slice(i+q.length)); };
+  out.innerHTML = `<p class="sub" style="margin-top:14px">Найдено: ${rows.length}</p><ol class="list">${rows.map(r=>
+    `<li style="--accent:${SIDES[r.k].accent}"><span class="kind">${esc(r.d.full)} · ${SIDES[r.k].label.toLowerCase()}, ${SIDES[r.k].short}</span>${hl(r.it)}</li>`).join("")}</ol>`;
+}
+document.getElementById("q").addEventListener("input", renderSearch);
+
+/* ---------- Навигация ---------- */
+const VIEWS = ["muscle","match","joint","search"];
+function show(v){
+  if(!VIEWS.includes(v)) v = "muscle";
+  VIEWS.forEach(x=>document.getElementById("v-"+x).hidden = x!==v);
+  document.querySelectorAll("nav button").forEach(b=>{ if(b.dataset.view===v) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+  try{ if(location.hash.slice(1)!==v) history.replaceState(null,"","#"+v); }catch(e){}
+  window.scrollTo(0,0);
+}
+document.querySelector("nav").addEventListener("click", e=>{const b=e.target.closest("button"); if(b) show(b.dataset.view);});
+window.addEventListener("hashchange", ()=>show(location.hash.slice(1)));
+
+renderMuscle(); renderMatch(); renderJoint(); renderSearch();
+show(location.hash.slice(1) || "muscle");
+</script>
+</body>
+</html>
