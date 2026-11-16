@@ -115,14 +115,37 @@ ol.seq button.go .t::after{content:"таблица гипотонии →";displ
 .fig .mu.deep{fill:none;stroke:none;pointer-events:none}
 .fig .mu.deep.on{fill:var(--uni);fill-opacity:.35;stroke:var(--uni);stroke-width:1.2;stroke-dasharray:2.5 1.6;filter:none}
 .fignote{font-size:.78rem;color:var(--muted);text-align:center;margin:-6px 0 12px}
+/* quiz */
+:root{--bad:#B42318;--bad-soft:#FDE7E4}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bad:#FF8A80;--bad-soft:#3E1F24}}
+:root[data-theme="dark"]{--bad:#FF8A80;--bad-soft:#3E1F24}
+.qh{font-size:.9rem;margin:16px 0 8px;color:var(--muted);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:14px 18px;font-weight:600;font-size:1rem;background:var(--uni);color:#fff;margin-top:20px}
+.btn.ghost{background:var(--chip);color:var(--ink);margin-top:8px}
+.bar{height:6px;border-radius:3px;background:var(--chip);overflow:hidden;margin:6px 0 14px}
+.bar span{display:block;height:100%;background:var(--uni);transition:width .3s}
+.qtext{font-size:1.2rem;line-height:1.3;margin:0 0 14px}
+.opt{display:block;width:100%;text-align:left;border:2px solid var(--line);background:var(--surface);border-radius:12px;padding:12px 14px;margin-bottom:8px;font-size:1rem;line-height:1.35}
+.opt:disabled{cursor:default;opacity:.65}
+.opt.ok{border-color:var(--bi);background:var(--bi-soft);opacity:1}
+.opt.bad{border-color:var(--bad);background:var(--bad-soft);opacity:1}
+.expl{border-radius:12px;padding:12px 14px;margin:6px 0 0;font-size:.95rem}
+.expl.ok{background:var(--bi-soft);color:var(--bi)}
+.expl.bad{background:var(--bad-soft);color:var(--bad)}
+.expl small{display:block;color:var(--muted);margin-top:4px}
+.score{font-size:3rem;font-weight:700;line-height:1;margin:10px 0 4px;letter-spacing:-.02em}
+.mist{background:var(--surface);border-radius:12px;padding:12px 14px;margin-bottom:8px;font-size:.92rem}
+.mist b{display:block;margin-bottom:6px;font-weight:600}
+.mist .y{color:var(--bad)} .mist .r{color:var(--bi)}
 /* search */
 .search{width:100%;font:inherit;font-size:1rem;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink)}
 .search:focus{border-color:var(--uni);outline:none}
 mark{background:var(--con-soft);color:inherit;border-radius:3px}
 
 nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
-nav .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
-nav button{border:0;background:none;padding:10px 2px;font-size:.78rem;line-height:1.15;hyphens:manual;color:var(--muted);font-weight:500}
+nav .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
+nav button{border:0;background:none;padding:10px 1px;font-size:.72rem;line-height:1.15;hyphens:manual;color:var(--muted);font-weight:500}
 nav button[aria-current="page"]{color:var(--ink);font-weight:700;box-shadow:inset 0 3px 0 var(--ink)}
 .view[hidden]{display:none}
 @media (prefers-reduced-motion:no-preference){ol.list li{animation:in .18s ease-out both}@keyframes in{from{opacity:0;transform:translateY(4px)}}}
@@ -167,6 +190,11 @@ nav button[aria-current="page"]{color:var(--ink);font-weight:700;box-shadow:inse
   <div id="jointOut"></div>
 </section>
 
+<section class="view" id="v-quiz" hidden>
+  <header><h1>Тест: проверка знаний</h1></header>
+  <div id="quizOut"></div>
+</section>
+
 <section class="view" id="v-search" hidden>
   <header>
     <h1>Поиск по всем таблицам</h1>
@@ -180,9 +208,10 @@ nav button[aria-current="page"]{color:var(--ink);font-weight:700;box-shadow:inse
 
 <nav><div class="in">
   <button data-view="muscle" aria-current="page">Мышца</button>
-  <button data-view="match">Совпадения</button>
+  <button data-view="match">Совпа&shy;дения</button>
   <button data-view="seq">Последова&shy;тельности</button>
   <button data-view="joint">Сустав</button>
+  <button data-view="quiz">Тест</button>
   <button data-view="search">Поиск</button>
 </div></nav>
 
@@ -545,6 +574,97 @@ function makeList(list, storeKey, tabsId, outId, showName){
 const renderSeq = makeList(SEQS, "hypo-seq", "stabs", "seqOut");
 const renderJoint = makeList(JOINT, "hypo-jtab2", "jtabs", "jointOut");
 
+/* ---------- Тест ---------- */
+const shuffle = a => { a = a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const SIDE_TXT = {uni:"односторонней", bi:"двусторонней"};
+const QTOPICS = [{id:"all",name:"Всё вместе"},{id:"lop",name:"Лопатка"},{id:"arm",name:"Плечо и рука"},{id:"neck",name:"Шея и грудь"},{id:"seq",name:"Последовательности"}];
+function qMuscleToItem(pool){
+  for(let t=0;t<30;t++){
+    const m = pick(pool), s = pick(["uni","bi"].filter(k=>m[k].length)), c = pick(m[s]);
+    const seen = new Set(["uni","bi","con"].flatMap(k=>m[k]).map(key)), dis = [];
+    for(const it of shuffle(DATA.filter(d=>d!==m).flatMap(d=>d.uni.concat(d.bi)))){
+      const k = key(it); if(seen.has(k)) continue; seen.add(k); dis.push(it); if(dis.length===3) break;
+    }
+    if(dis.length<3) continue;
+    return {q:`${m.full}: что проверить при ${SIDE_TXT[s]} гипотонии?`, opts:shuffle([c,...dis]), a:c, note:`${m.full}, стр. ${m.page}`};
+  }
+}
+function qItemToMuscle(pool){
+  for(let t=0;t<30;t++){
+    const m = pick(pool), s = pick(["uni","bi"].filter(k=>m[k].length)), it = pick(m[s]), k = key(it);
+    const has = d => d[s].some(x=>key(x)===k);
+    const dis = shuffle(pool.filter(d=>!has(d))).concat(shuffle(DATA.filter(d=>!has(d) && !pool.includes(d)))).slice(0,3);
+    if(dis.length<3) continue;
+    return {q:`При ${SIDE_TXT[s]} гипотонии какой мышцы проверяют «${it}»?`, opts:shuffle([m,...dis]).map(d=>d.full), a:m.full, note:`${m.full}, стр. ${m.page}`};
+  }
+}
+function qSeq(){
+  const sq = pick(SEQS), names = sq.items.map(x=>x[0]);
+  if(Math.random()<.5){
+    const i = Math.floor(Math.random()*names.length);
+    return {q:`${sq.title}: какая мышца стоит в последовательности под номером ${i+1}?`, opts:shuffle([names[i],...shuffle(names.filter((_,j)=>j!==i)).slice(0,3)]), a:names[i], note:`${sq.title}, стр. ${sq.page}`};
+  }
+  const i = Math.floor(Math.random()*(names.length-1));
+  return {q:`${sq.title}: какая мышца идёт сразу после «${names[i]}»?`, opts:shuffle([names[i+1],...shuffle(names.filter((_,j)=>j!==i+1 && j!==i)).slice(0,3)]), a:names[i+1], note:`${sq.title}, стр. ${sq.page}`};
+}
+function buildQuiz(topic, n){
+  const pool = ["lop","arm","neck"].includes(topic) ? DATA.filter(d=>d.group===topic) : DATA;
+  const gens = topic==="seq" ? [qSeq] : topic==="all" ? [qMuscleToItem,qItemToMuscle,qMuscleToItem,qItemToMuscle,qSeq] : [qMuscleToItem,qItemToMuscle];
+  const qs = [], seen = new Set();
+  for(let t=0; qs.length<n && t<n*20; t++){
+    const q = pick(gens)(pool); if(!q || seen.has(q.q+q.a)) continue;
+    seen.add(q.q+q.a); qs.push(q);
+  }
+  return qs;
+}
+let quiz = {stage:"start", topic:store.get("hypo-qtopic","all"), n:store.get("hypo-qn",10)};
+function renderQuiz(){
+  const out = document.getElementById("quizOut");
+  if(quiz.stage==="start"){
+    out.innerHTML = `<p class="sub" style="margin-top:4px">Вопросы каждый раз составляются заново из таблиц гипотонии и последовательностей.</p>
+      <h3 class="qh">Тема</h3><div class="chips">${QTOPICS.map(t=>`<button class="m" data-topic="${t.id}" aria-pressed="${t.id===quiz.topic}">${t.name}</button>`).join("")}</div>
+      <h3 class="qh">Сколько вопросов</h3><div class="chips">${[10,20,30].map(n=>`<button class="m" data-n="${n}" aria-pressed="${n===quiz.n}">${n}</button>`).join("")}</div>
+      <button class="btn" data-act="start">Начать тест</button>`;
+  } else if(quiz.stage==="q"){
+    const q = quiz.qs[quiz.i], done = quiz.pick!=null, ok = done && q.opts[quiz.pick]===q.a, last = quiz.i===quiz.qs.length-1;
+    out.innerHTML = `<p class="sub" style="margin:4px 0 0">Вопрос ${quiz.i+1} из ${quiz.qs.length} · верно: ${quiz.score}</p>
+      <div class="bar"><span style="width:${(quiz.i+(done?1:0))/quiz.qs.length*100}%"></span></div>
+      <h2 class="qtext">${esc(q.q)}</h2>
+      ${q.opts.map((o,j)=>{
+        const cls = !done ? "" : o===q.a ? " ok" : j===quiz.pick ? " bad" : "";
+        return `<button class="opt${cls}" data-opt="${j}" ${done?"disabled":""}>${esc(o)}</button>`;
+      }).join("")}
+      ${done ? `<p class="expl ${ok?"ok":"bad"}">${ok?"Верно!":`Неверно. Правильный ответ: «${esc(q.a)}»`}<small>${esc(q.note)}</small></p>
+      <button class="btn" data-act="next">${last?"Посмотреть результат":"Дальше"}</button>` : ""}
+      <button class="btn ghost" data-act="menu">Закончить тест</button>`;
+  } else {
+    const n = quiz.qs.length, pct = n ? Math.round(quiz.score/n*100) : 0;
+    const msg = pct>=90 ? "Отлично, материал знаете уверенно." : pct>=70 ? "Хорошо, осталось подтянуть несколько пунктов." : pct>=50 ? "Неплохо, но есть что повторить." : "Стоит ещё раз пройтись по таблицам.";
+    out.innerHTML = `<p class="score">${quiz.score} из ${n}</p><p class="sub">${pct}% · ${msg}</p>
+      ${quiz.wrong.length ? `<h3 class="qh">Ошибки</h3>${quiz.wrong.map(w=>`<div class="mist"><b>${esc(w.q)}</b><span class="y">Ваш ответ: ${esc(w.y)}</span><br><span class="r">Правильно: ${esc(w.a)}</span><br><small style="color:var(--muted)">${esc(w.note)}</small></div>`).join("")}` : `<p class="sub">Ни одной ошибки.</p>`}
+      <button class="btn" data-act="start">Пройти ещё раз</button>
+      <button class="btn ghost" data-act="menu">Выбрать другую тему</button>`;
+  }
+}
+document.getElementById("quizOut").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.topic){ quiz.topic = b.dataset.topic; store.set("hypo-qtopic", quiz.topic); }
+  else if(b.dataset.n){ quiz.n = Number(b.dataset.n); store.set("hypo-qn", quiz.n); }
+  else if(b.dataset.opt!=null && quiz.pick==null){
+    quiz.pick = Number(b.dataset.opt);
+    const q = quiz.qs[quiz.i];
+    if(q.opts[quiz.pick]===q.a) quiz.score++; else quiz.wrong.push({q:q.q, y:q.opts[quiz.pick], a:q.a, note:q.note});
+  }
+  else if(b.dataset.act==="start"){ quiz = {...quiz, stage:"q", qs:buildQuiz(quiz.topic, quiz.n), i:0, score:0, pick:null, wrong:[]}; window.scrollTo(0,0); }
+  else if(b.dataset.act==="next"){
+    if(quiz.i < quiz.qs.length-1){ quiz.i++; quiz.pick = null; } else quiz.stage = "end";
+    window.scrollTo(0,0);
+  }
+  else if(b.dataset.act==="menu"){ quiz.stage = "start"; window.scrollTo(0,0); }
+  renderQuiz();
+});
+
 /* ---------- Поиск ---------- */
 function renderSearch(){
   const q = norm(document.getElementById("q").value);
@@ -562,7 +682,7 @@ function renderSearch(){
 document.getElementById("q").addEventListener("input", renderSearch);
 
 /* ---------- Навигация ---------- */
-const VIEWS = ["muscle","match","seq","joint","search"];
+const VIEWS = ["muscle","match","seq","joint","quiz","search"];
 function show(v){
   if(!VIEWS.includes(v)) v = "muscle";
   VIEWS.forEach(x=>document.getElementById("v-"+x).hidden = x!==v);
@@ -573,7 +693,7 @@ function show(v){
 document.querySelector("nav").addEventListener("click", e=>{const b=e.target.closest("button"); if(b) show(b.dataset.view);});
 window.addEventListener("hashchange", ()=>show(location.hash.slice(1)));
 
-renderMuscle(); renderMatch(); renderSeq(); renderJoint(); renderSearch();
+renderMuscle(); renderMatch(); renderSeq(); renderJoint(); renderQuiz(); renderSearch();
 show(location.hash.slice(1) || "muscle");
 </script>
 </body>
